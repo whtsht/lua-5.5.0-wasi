@@ -1,0 +1,12 @@
+# Build artifacts
+src/*.o
+src/*.a
+src/lua
+src/luac
+wasi-shim/*.o
+
+# WASM output
+src/*.wasm
+
+# Installation directory
+install/

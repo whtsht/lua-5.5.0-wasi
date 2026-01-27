@@ -1,0 +1,13 @@
+#include "setjmp.h"
+
+/* Stub implementations - Asyncify will transform these */
+int setjmp(jmp_buf env) {
+    (void)env;
+    return 0;
+}
+
+void longjmp(jmp_buf env, int val) {
+    (void)env;
+    (void)val;
+    __builtin_trap();
+}
