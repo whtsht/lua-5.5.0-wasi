@@ -32,6 +32,10 @@
 #include "lvm.h"
 
 
+/* External function for JIT hotspot detection (imported from WASM host) */
+__attribute__((import_module("env"), import_name("backedge")))
+extern void backedge(unsigned int pc);
+
 /*
 ** By default, use jump tables in the main interpreter loop on gcc
 ** and compatible compilers.
@@ -1124,7 +1128,12 @@ void luaV_finishOp (lua_State *L) {
 ** Execute a jump instruction. The 'updatetrap' allows signals to stop
 ** tight loops. (Without it, the local copy of 'trap' could never change.)
 */
-#define dojump(ci,i,e)	{ pc += GETARG_sJ(i) + e; updatetrap(ci); }
+#define dojump(ci,i,e)	{ \
+  int offset_ = GETARG_sJ(i) + e; \
+  pc += offset_; \
+  if (offset_ < 0) backedge((unsigned int)(uintptr_t)pc); \
+  updatetrap(ci); \
+}
 
 
 /* for test instructions, execute the jump instruction that follows it */
@@ -1839,10 +1848,13 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
             idx = intop(+, idx, step);  /* add step to index */
             chgivalue(s2v(ra + 2), idx);  /* update control variable */
             pc -= GETARG_Bx(i);  /* jump back */
+            backedge((unsigned int)(uintptr_t)pc);
           }
         }
-        else if (floatforloop(ra))  /* float loop */
+        else if (floatforloop(ra)) {  /* float loop */
           pc -= GETARG_Bx(i);  /* jump back */
+          backedge((unsigned int)(uintptr_t)pc);
+        }
         updatetrap(ci);  /* allows a signal to break the loop */
         vmbreak;
       }
@@ -1894,8 +1906,10 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
       vmcase(OP_TFORLOOP) {
        l_tforloop: {
         StkId ra = RA(i);
-        if (!ttisnil(s2v(ra + 3)))  /* continue loop? */
+        if (!ttisnil(s2v(ra + 3))) {  /* continue loop? */
           pc -= GETARG_Bx(i);  /* jump back */
+          backedge((unsigned int)(uintptr_t)pc);
+        }
         vmbreak;
       }}
       vmcase(OP_SETLIST) {
