@@ -26,7 +26,7 @@ MYLIBS=
 MYOBJS=
 
 # WASI SDK configuration
-WASI_SDK_PATH= $(HOME)/.wasi-sdk/27.0-x86_64-linux
+WASI_SDK_PATH= /opt/wasi-sdk
 WASI_CC= $(WASI_SDK_PATH)/bin/clang --sysroot=$(WASI_SDK_PATH)/share/wasi-sysroot
 WASI_CFLAGS= -I../wasi-shim -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -DLUA_TMPNAMBUFSIZE=32 '-Dlua_tmpnam(b,e)=((e)=1)' '-Dl_system(cmd)=((cmd)==NULL?0:-1)'
 WASI_LIBS= -lwasi-emulated-signal -lwasi-emulated-process-clocks
