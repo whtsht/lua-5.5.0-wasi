@@ -32,9 +32,15 @@
 #include "lvm.h"
 
 
-/* External function for JIT hotspot detection (imported from WASM host) */
+/* JIT hotspot detection: imported from the Wasm host on wasm32-wasi.
+** Native builds get a no-op that -O2 removes, so the same source also
+** builds an unpatched plain interpreter for baseline comparison. */
+#if defined(__wasm__) && defined(__wasi__)
 __attribute__((import_module("env"), import_name("backedge")))
 extern void backedge(unsigned int pc);
+#else
+static inline void backedge(unsigned int pc) { (void)pc; }
+#endif
 
 /*
 ** By default, use jump tables in the main interpreter loop on gcc
